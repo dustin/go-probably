@@ -2,13 +2,9 @@ package probably
 
 import (
 	"fmt"
+	"hash/crc32"
 	"math"
 )
-
-// Interface for things that depth-hash themselves.
-type Hashable interface {
-	Hash(d int) int
-}
 
 // A count-min sketcher.
 type Sketch [][]uint64
@@ -31,8 +27,11 @@ func (s Sketch) String() string {
 	return fmt.Sprintf("{Sketch %dx%d}", len(s), len(s[0]))
 }
 
-func hash(h Hashable, d, lim int) int {
-	rv := h.Hash(d) % lim
+func hash(s string, d, lim int) int {
+	h1 := crc32.Update(0, crc32.IEEETable, []byte(s))
+	h2 := int(crc32.Update(h1, crc32.IEEETable, []byte{byte(d)}))
+
+	rv := h2 % lim
 	if rv < 0 {
 		rv = 0 - rv
 	}
@@ -40,7 +39,7 @@ func hash(h Hashable, d, lim int) int {
 }
 
 // Increment the count for the given input.
-func (s *Sketch) Increment(h Hashable) {
+func (s *Sketch) Increment(h string) {
 	d := len((*s)[0])
 	w := len(*s)
 	for i := 0; i < d; i++ {
@@ -49,7 +48,7 @@ func (s *Sketch) Increment(h Hashable) {
 }
 
 // Get the estimate count for the given input.
-func (s Sketch) Count(h Hashable) uint64 {
+func (s Sketch) Count(h string) uint64 {
 	var min uint64 = math.MaxUint64
 	d := len(s[0])
 	w := len(s)

@@ -15,16 +15,16 @@ func TestNewSketch(t *testing.T) {
 func TestCounting(t *testing.T) {
 	s := NewSketch(8, 3)
 
-	hello := HashableString("hello")
-	there := HashableString("there")
-	world := HashableString("world")
+	hello := "hello"
+	there := "there"
+	world := "world"
 
 	s.Increment(hello)
 	s.Increment(hello)
 	s.Increment(there)
 
 	exp := []struct {
-		s HashableString
+		s string
 		v uint64
 	}{
 		{hello, 2},
@@ -42,11 +42,11 @@ func TestCounting(t *testing.T) {
 }
 
 func BenchmarkHashStringDepth64(b *testing.B) {
-	s := HashableString("this is a test string to hash")
+	s := "this is a test string to hash"
 
 	for i := 0; i < b.N; i++ {
 		for d := 0; d < 64; d++ {
-			s.Hash(d)
+			hash(s, d, 64)
 		}
 	}
 }
