@@ -16,6 +16,12 @@ type StreamTop struct {
 	keys map[string]uint64
 }
 
+// An item with its count.
+type ItemCount struct {
+	Key   string
+	Count uint64
+}
+
 func NewStreamTop(w, d, maxItems int) *StreamTop {
 	return &StreamTop{
 		NewSketch(w, d),
@@ -78,8 +84,13 @@ func (s *StreamTop) Add(v string) {
 }
 
 // Get the top items.
-func (s StreamTop) GetTop() map[string]uint64 {
-	return s.keys
+func (s StreamTop) GetTop() []ItemCount {
+	ts := s.getTrimSlice()
+	rv := make([]ItemCount, 0, len(s.keys))
+	for _, k := range ts.keys {
+		rv = append(rv, ItemCount{k, s.keys[k]})
+	}
+	return rv
 }
 
 // Merge the given stream into this one.
