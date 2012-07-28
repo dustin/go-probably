@@ -47,9 +47,13 @@ func hashn(s string, d, lim int) []int {
 func (s *Sketch) Increment(h string) (val uint64) {
 	d := len((*s)[0])
 	w := len(*s)
+	val = math.MaxUint64
 	for i, pos := range hashn(h, d, w) {
-		val = (*s)[pos][i]
-		(*s)[pos][i]++
+		v := (*s)[pos][i] + 1
+		(*s)[pos][i] = v
+		if v < val {
+			val = v
+		}
 	}
 	return val
 }

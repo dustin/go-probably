@@ -19,8 +19,12 @@ func TestCounting(t *testing.T) {
 	there := "there"
 	world := "world"
 
-	s.Increment(hello)
-	s.Increment(hello)
+	if s.Increment(hello) != 1 {
+		t.Fatalf("Expected increment to set to 1")
+	}
+	if s.Increment(hello) != 2 {
+		t.Fatalf("Expected increment to set to 2")
+	}
 	s.Increment(there)
 
 	exp := []struct {
