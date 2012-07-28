@@ -2,7 +2,6 @@ package probably
 
 import (
 	"fmt"
-	"hash/crc32"
 	"math"
 )
 
@@ -28,12 +27,19 @@ func (s Sketch) String() string {
 }
 
 func hashn(s string, d, lim int) []int {
-	h1 := crc32.Update(0, crc32.IEEETable, []byte(s))
+	hval := uint32(0)
+	for _, c := range s {
+		hval = (hval << 3) ^ hval ^ uint32(c)
+	}
 
 	rv := make([]int, 0, d)
 
 	for i := 0; i < d; i++ {
-		h := int(crc32.Update(h1, crc32.IEEETable, []byte{byte(i)})) % lim
+		h2 := hval + uint32(i)
+		h2 += (h2 << 10)
+		h2 ^= (h2 >> 6)
+
+		h := int(h2) % lim
 		if h < 0 {
 			h = 0 - h
 		}
