@@ -8,15 +8,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dgryski/dgohash"
+
 	"github.com/dustin/go-humanize"
 	"github.com/dustin/go-probably"
 )
 
 const (
-	numWorkers = 4
-	countMinW  = 10000
-	countMinD  = 4
+	numWorkers = 8
+	countMinW  = 1000000
+	countMinD  = 8
 	maxRecords = 100
+	logError   = 0.0001
 )
 
 func maybeFatal(err error) {
@@ -25,17 +28,32 @@ func maybeFatal(err error) {
 	}
 }
 
-func streamWorker(chin <-chan string, chout chan<- *probably.StreamTop) {
+func streamWorker(chin <-chan string,
+	chout chan<- *probably.StreamTop,
+	chcount chan<- *probably.HyperLogLog) {
 	st := probably.NewStreamTop(countMinW, countMinD, maxRecords)
+	hll := probably.NewHyperLogLog(logError)
+
+	hash := dgohash.NewSuperFastHash()
 
 	for b := range chin {
 		links := strings.Split(b, " ")[1:]
-		for _, l := range links {
-			st.Add(l)
+		if len(links) > 1 {
+			for i, l1 := range links {
+				for _, l2 := range links[i+1:] {
+					pair := l1 + " " + l2
+					st.Add(pair)
+
+					hash.Reset()
+					hash.Write([]byte(pair))
+					hll.Add(hash.Sum32())
+				}
+			}
 		}
 	}
 
 	chout <- st
+	chcount <- hll
 }
 
 func readFile(fn string, ch chan<- string) {
@@ -68,9 +86,10 @@ func readFile(fn string, ch chan<- string) {
 func main() {
 	bch := make(chan string, 1024)
 	outch := make(chan *probably.StreamTop)
+	outchcount := make(chan *probably.HyperLogLog)
 
 	for i := 0; i < numWorkers; i++ {
-		go streamWorker(bch, outch)
+		go streamWorker(bch, outch, outchcount)
 	}
 
 	readFile(os.Args[1], bch)
@@ -78,12 +97,18 @@ func main() {
 	close(bch)
 
 	st := probably.NewStreamTop(countMinW, countMinD, maxRecords)
+	hll := probably.NewHyperLogLog(logError)
 
 	for i := 0; i < numWorkers; i++ {
 		st.Merge(<-outch)
+		hll.Merge(<-outchcount)
 	}
 
+	log.Printf("Cardinality estimate:  %s",
+		humanize.Comma(int64(hll.Count())))
+
 	for _, p := range st.GetTop()[:20] {
-		log.Printf("  %v\t->\t%v", p.Key, p.Count)
+		log.Printf("  %v\t->\t%s",
+			p.Key, humanize.Comma(int64(p.Count)))
 	}
 }
