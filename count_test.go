@@ -73,12 +73,10 @@ func TestMerging(t *testing.T) {
 	}
 }
 
-func BenchmarkHashStringDepth64(b *testing.B) {
+func BenchmarkHashNStringDepth64(b *testing.B) {
 	s := "this is a test string to hash"
 
 	for i := 0; i < b.N; i++ {
-		for d := 0; d < 64; d++ {
-			hash(s, d, 64)
-		}
+		hashn(s, 64, 64)
 	}
 }

@@ -27,14 +27,19 @@ func (s Sketch) String() string {
 	return fmt.Sprintf("{Sketch %dx%d}", len(s), len(s[0]))
 }
 
-func hash(s string, d, lim int) int {
+func hashn(s string, d, lim int) []int {
 	h1 := crc32.Update(0, crc32.IEEETable, []byte(s))
-	h2 := int(crc32.Update(h1, crc32.IEEETable, []byte{byte(d)}))
 
-	rv := h2 % lim
-	if rv < 0 {
-		rv = 0 - rv
+	rv := make([]int, 0, d)
+
+	for i := 0; i < d; i++ {
+		h := int(crc32.Update(h1, crc32.IEEETable, []byte{byte(i)})) % lim
+		if h < 0 {
+			h = 0 - h
+		}
+		rv = append(rv, h)
 	}
+
 	return rv
 }
 
@@ -42,8 +47,7 @@ func hash(s string, d, lim int) int {
 func (s *Sketch) Increment(h string) (val uint64) {
 	d := len((*s)[0])
 	w := len(*s)
-	for i := 0; i < d; i++ {
-		pos := hash(h, i, w)
+	for i, pos := range hashn(h, d, w) {
 		val = (*s)[pos][i]
 		(*s)[pos][i]++
 	}
@@ -55,8 +59,8 @@ func (s Sketch) Count(h string) uint64 {
 	var min uint64 = math.MaxUint64
 	d := len(s[0])
 	w := len(s)
-	for i := 0; i < d; i++ {
-		v := s[hash(h, i, w)][i]
+	for i, pos := range hashn(h, d, w) {
+		v := s[pos][i]
 		if v < min {
 			min = v
 		}
