@@ -39,12 +39,15 @@ func hash(s string, d, lim int) int {
 }
 
 // Increment the count for the given input.
-func (s *Sketch) Increment(h string) {
+func (s *Sketch) Increment(h string) (val uint64) {
 	d := len((*s)[0])
 	w := len(*s)
 	for i := 0; i < d; i++ {
-		(*s)[hash(h, i, w)][i]++
+		pos := hash(h, i, w)
+		val = (*s)[pos][i]
+		(*s)[pos][i]++
 	}
+	return val
 }
 
 // Get the estimate count for the given input.
@@ -59,4 +62,17 @@ func (s Sketch) Count(h string) uint64 {
 		}
 	}
 	return min
+}
+
+// Merge the given sketch into this one.
+func (s *Sketch) Merge(from *Sketch) {
+	if len(*s) != len(*from) || len((*s)[0]) != len((*from)[0]) {
+		panic("Can't merge different sketches with different dimensions")
+	}
+
+	for i, l := range *from {
+		for j, v := range l {
+			(*s)[i][j] += v
+		}
+	}
 }
