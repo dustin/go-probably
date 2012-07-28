@@ -8,14 +8,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dustin/go-humanize"
 	"github.com/dustin/go-probably"
 )
 
 const (
-	numWorkers = 8
-	countMinW  = 100000
-	countMinD  = 8
-	maxRecords = 1000
+	numWorkers = 4
+	countMinW  = 10000
+	countMinD  = 4
+	maxRecords = 100
 )
 
 func maybeFatal(err error) {
@@ -37,15 +38,34 @@ func streamWorker(chin <-chan string, chout chan<- *probably.StreamTop) {
 	chout <- st
 }
 
-func main() {
-	f, err := os.Open(os.Args[1])
+func readFile(fn string, ch chan<- string) {
+	f, err := os.Open(fn)
 	maybeFatal(err)
 	defer f.Close()
 
-	z := bzip2.NewReader(f)
+	br := bufio.NewReader(bzip2.NewReader(f))
 
-	br := bufio.NewReader(z)
+	for i := 0; ; i++ {
+		b, err := br.ReadBytes('\n')
+		switch err {
+		case io.EOF:
+			log.Printf("Processed %s lines total",
+				humanize.Comma(int64(i)))
+			return
+		case nil:
+			ch <- string(b[:len(b)-1])
+		default:
+			log.Fatalf("Error reading input: %v", err)
+		}
 
+		if i%100000 == 0 {
+			log.Printf("Processed %s lines",
+				humanize.Comma(int64(i)))
+		}
+	}
+}
+
+func main() {
 	bch := make(chan string, 1024)
 	outch := make(chan *probably.StreamTop)
 
@@ -53,19 +73,7 @@ func main() {
 		go streamWorker(bch, outch)
 	}
 
-	for i := 0; ; i++ {
-		b, err := br.ReadBytes('\n')
-		if err == io.EOF {
-			break
-		}
-		maybeFatal(err)
-
-		bch <- string(b[:len(b)-1])
-
-		if i%100000 == 0 {
-			log.Printf("Processed %v lines", i)
-		}
-	}
+	readFile(os.Args[1], bch)
 
 	close(bch)
 
@@ -75,7 +83,7 @@ func main() {
 		st.Merge(<-outch)
 	}
 
-	for _, p := range st.GetTop() {
-		log.Printf("  %v -> %v", p.Key, p.Count)
+	for _, p := range st.GetTop()[:20] {
+		log.Printf("  %v\t->\t%v", p.Key, p.Count)
 	}
 }
