@@ -14,16 +14,16 @@ func NewSketch(w, d int) *Sketch {
 		panic("Dimensions must be positive")
 	}
 
-	rv := make(Sketch, w)
-	for i := 0; i < w; i++ {
-		rv[i] = make([]uint64, d)
+	rv := make(Sketch, d)
+	for i := 0; i < d; i++ {
+		rv[i] = make([]uint64, w)
 	}
 
 	return &rv
 }
 
 func (s Sketch) String() string {
-	return fmt.Sprintf("{Sketch %dx%d}", len(s), len(s[0]))
+	return fmt.Sprintf("{Sketch %dx%d}", len(s[0]), len(s))
 }
 
 func hashn(s string, d, lim int) []int {
@@ -51,12 +51,12 @@ func hashn(s string, d, lim int) []int {
 
 // Increment the count for the given input.
 func (s *Sketch) Increment(h string) (val uint64) {
-	d := len((*s)[0])
-	w := len(*s)
+	w := len((*s)[0])
+	d := len(*s)
 	val = math.MaxUint64
 	for i, pos := range hashn(h, d, w) {
-		v := (*s)[pos][i] + 1
-		(*s)[pos][i] = v
+		v := (*s)[i][pos] + 1
+		(*s)[i][pos] = v
 		if v < val {
 			val = v
 		}
@@ -67,10 +67,10 @@ func (s *Sketch) Increment(h string) (val uint64) {
 // Get the estimate count for the given input.
 func (s Sketch) Count(h string) uint64 {
 	var min uint64 = math.MaxUint64
-	d := len(s[0])
-	w := len(s)
+	w := len(s[0])
+	d := len(s)
 	for i, pos := range hashn(h, d, w) {
-		v := s[pos][i]
+		v := s[i][pos]
 		if v < min {
 			min = v
 		}
