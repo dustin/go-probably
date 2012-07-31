@@ -6,7 +6,7 @@ import (
 )
 
 // A count-min sketcher.
-type Sketch [][]uint64
+type Sketch [][]uint32
 
 // Create a new count-min sketch with the given width and depth.
 func NewSketch(w, d int) *Sketch {
@@ -16,7 +16,7 @@ func NewSketch(w, d int) *Sketch {
 
 	rv := make(Sketch, d)
 	for i := 0; i < d; i++ {
-		rv[i] = make([]uint64, w)
+		rv[i] = make([]uint32, w)
 	}
 
 	return &rv
@@ -50,10 +50,10 @@ func hashn(s string, d, lim int) []int {
 }
 
 // Increment the count for the given input.
-func (s *Sketch) Increment(h string) (val uint64) {
+func (s *Sketch) Increment(h string) (val uint32) {
 	w := len((*s)[0])
 	d := len(*s)
-	val = math.MaxUint64
+	val = math.MaxUint32
 	for i, pos := range hashn(h, d, w) {
 		v := (*s)[i][pos] + 1
 		(*s)[i][pos] = v
@@ -65,8 +65,8 @@ func (s *Sketch) Increment(h string) (val uint64) {
 }
 
 // Get the estimate count for the given input.
-func (s Sketch) Count(h string) uint64 {
-	var min uint64 = math.MaxUint64
+func (s Sketch) Count(h string) uint32 {
+	var min uint32 = math.MaxUint32
 	w := len(s[0])
 	d := len(s)
 	for i, pos := range hashn(h, d, w) {

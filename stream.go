@@ -9,17 +9,17 @@ const initialThresh = 0
 // Top-n items on a stream.
 type StreamTop struct {
 	sk       *Sketch
-	thresh   uint64
+	thresh   uint32
 	trimTo   int
 	maxItems int
 
-	keys map[string]uint64
+	keys map[string]uint32
 }
 
 // An item with its count.
 type ItemCount struct {
 	Key   string
-	Count uint64
+	Count uint32
 }
 
 func NewStreamTop(w, d, maxItems int) *StreamTop {
@@ -28,7 +28,7 @@ func NewStreamTop(w, d, maxItems int) *StreamTop {
 		initialThresh,
 		int(float64(maxItems) * 0.75),
 		maxItems,
-		make(map[string]uint64),
+		make(map[string]uint32),
 	}
 }
 
@@ -97,7 +97,7 @@ func (s StreamTop) GetTop() []ItemCount {
 func (s *StreamTop) Merge(from *StreamTop) {
 	s.sk.Merge(from.sk)
 
-	d := map[string]uint64{}
+	d := map[string]uint32{}
 
 	for k := range s.keys {
 		d[k] = s.sk.Count(k)
