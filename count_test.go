@@ -29,7 +29,7 @@ func TestCounting(t *testing.T) {
 
 	exp := []struct {
 		s string
-		v uint64
+		v uint32
 	}{
 		{hello, 2},
 		{there, 1},
@@ -63,7 +63,7 @@ func TestMerging(t *testing.T) {
 
 	exp := []struct {
 		s string
-		v uint64
+		v uint32
 	}{
 		{hello, 2},
 		{there, 1},

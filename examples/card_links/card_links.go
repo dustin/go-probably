@@ -8,15 +8,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dgryski/dgohash"
+
 	"github.com/dustin/go-humanize"
 	"github.com/dustin/go-probably"
 )
 
+// 2012/07/30 17:20:03 Initializing a slice of 134217728 for 0.0001 from m=10400, k=27, k_comp=5
+// 2012/07/30 17:20:43 Initializing a slice of 0 for 1e-05 from m=104000, k=34, k_comp=-2
+
 const (
-	numWorkers = 1
-	countMinW  = 100000000
-	countMinD  = 5
-	maxRecords = 100
+	numWorkers = 8
+	logError   = 0.0001
 )
 
 func maybeFatal(err error) {
@@ -26,8 +29,10 @@ func maybeFatal(err error) {
 }
 
 func streamWorker(chin <-chan string,
-	chout chan<- *probably.StreamTop) {
-	st := probably.NewStreamTop(countMinW, countMinD, maxRecords)
+	chcount chan<- *probably.HyperLogLog) {
+	hll := probably.NewHyperLogLog(logError)
+
+	hash := dgohash.NewSuperFastHash()
 
 	for b := range chin {
 		links := strings.Split(b, " ")[1:]
@@ -35,14 +40,16 @@ func streamWorker(chin <-chan string,
 			for i, l1 := range links {
 				for _, l2 := range links[i+1:] {
 					pair := l1 + " " + l2
-					st.Add(pair)
 
+					hash.Reset()
+					hash.Write([]byte(pair))
+					hll.Add(hash.Sum32())
 				}
 			}
 		}
 	}
 
-	chout <- st
+	chcount <- hll
 }
 
 func readFile(fn string, ch chan<- string) {
@@ -74,10 +81,10 @@ func readFile(fn string, ch chan<- string) {
 
 func main() {
 	bch := make(chan string, 1024)
-	outch := make(chan *probably.StreamTop)
+	outchcount := make(chan *probably.HyperLogLog)
 
 	for i := 0; i < numWorkers; i++ {
-		go streamWorker(bch, outch)
+		go streamWorker(bch, outchcount)
 	}
 
 	readFile(os.Args[1], bch)
@@ -88,14 +95,12 @@ func main() {
 	// hll := probably.NewHyperLogLog(logError)
 
 	// Grab the first worker's results and merge the rest of them in.
-	st := <-outch
+	hll := <-outchcount
 
 	for i := 0; i < numWorkers-1; i++ {
-		st.Merge(<-outch)
+		hll.Merge(<-outchcount)
 	}
 
-	for _, p := range st.GetTop()[:20] {
-		log.Printf("  %v\t->\t%s",
-			p.Key, humanize.Comma(int64(p.Count)))
-	}
+	log.Printf("Cardinality estimate:  %s",
+		humanize.Comma(int64(hll.Count())))
 }
