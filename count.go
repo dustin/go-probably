@@ -96,9 +96,14 @@ func (s *Sketch) Increment(h string) (val uint32) {
 	return s.Add(h, 1)
 }
 
+
 // Increment the count (conservatively) for the given input.
-// This routine partially mitigates the biased-estimates due to hash collisions
 func (s *Sketch) ConservativeIncrement(h string) (val uint32) {
+	return s.ConservativeAdd(h, 1)
+}
+
+// Add the count (conservatively) for the given input.
+func (s *Sketch) ConservativeAdd(h string, count uint32) (val uint32) {
 	w := len((*s)[0])
 	d := len(*s)
 	hashes := hashn(h, d, w)
@@ -111,7 +116,7 @@ func (s *Sketch) ConservativeIncrement(h string) (val uint32) {
 		}
 	}
 
-	val += 1
+	val += count
 
 	// Conservative update means no counter is increased to more than the
 	// size of the smallest counter plus the size of the increment.  This technique
