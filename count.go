@@ -58,19 +58,42 @@ func hashn(s string, d, lim int) []int {
 	return rv
 }
 
-// Increment the count for the given input.
-func (s *Sketch) Increment(h string) (val uint32) {
+// Add 'count' occurences of the given input
+func (s *Sketch) Add(h string, count uint32) (val uint32) {
 	w := len((*s)[0])
 	d := len(*s)
 	val = math.MaxUint32
 	for i, pos := range hashn(h, d, w) {
-		v := (*s)[i][pos] + 1
+		v := (*s)[i][pos] + count
 		(*s)[i][pos] = v
 		if v < val {
 			val = v
 		}
 	}
 	return val
+}
+
+// Delete 'count' occurences of the given input
+func (s *Sketch) Del(h string, count uint32) (val uint32) {
+	w := len((*s)[0])
+	d := len(*s)
+	val = math.MaxUint32
+	for i, pos := range hashn(h, d, w) {
+		v := (*s)[i][pos] - count
+		if v > (*s)[i][pos] { // did we wrap-around?
+			v = 0
+		}
+		(*s)[i][pos] = v
+		if v < val {
+			val = v
+		}
+	}
+	return val
+}
+
+// Increment the count for the given input.
+func (s *Sketch) Increment(h string) (val uint32) {
+	return s.Add(h, 1)
 }
 
 // Increment the count (conservatively) for the given input.
