@@ -73,6 +73,37 @@ func (s *Sketch) Increment(h string) (val uint32) {
 	return val
 }
 
+// Increment the count (conservatively) for the given input.
+// This routine partially mitigates the biased-estimates due to hash collisions
+func (s *Sketch) ConservativeIncrement(h string) (val uint32) {
+	w := len((*s)[0])
+	d := len(*s)
+	hashes := hashn(h, d, w)
+
+	val = math.MaxUint32
+	for i, pos := range hashes {
+		v := (*s)[i][pos]
+		if v < val {
+			val = v
+		}
+	}
+
+	val += 1
+
+	// Conservative update means no counter is increased to more than the
+	// size of the smallest counter plus the size of the increment.  This technique
+	// first described in Cristian Estan and George Varghese. 2002. New directions in
+	// traffic measurement and accounting. SIGCOMM Comput. Commun. Rev., 32(4).
+
+	for i, pos := range hashes {
+		v := (*s)[i][pos]
+		if v < val {
+			(*s)[i][pos] = val
+		}
+	}
+	return val
+}
+
 // Get the estimate count for the given input.
 func (s Sketch) Count(h string) uint32 {
 	var min uint32 = math.MaxUint32
