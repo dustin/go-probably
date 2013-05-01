@@ -74,7 +74,7 @@ func (s *StreamTop) trim() {
 
 // Add an item to the stream counter.
 func (s *StreamTop) Add(v string) {
-	count := s.sk.Increment(v)
+	count := s.sk.ConservativeIncrement(v)
 	if count > s.thresh {
 		s.keys[v] = count
 	}
