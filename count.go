@@ -157,7 +157,7 @@ func (s Sketch) Count(h string) uint32 {
 }
 
 /*
-   CountMinMean described in:
+   CountMeanMin described in:
    Fan Deng and Davood Raﬁei. 2007. New estimation algorithms for streaming data: Count-min can do more.
    http://webdocs.cs.ualberta.ca/~fandeng/paper/cmm.pdf
 
@@ -172,7 +172,7 @@ func (s Sketch) Count(h string) uint32 {
 // counts at the cost of larger under-estimation error.  For tasks sensitive to
 // under-estimation, use the regular Count() and only call ConservativeAdd()
 // and ConservativeIncrement() when constructing your sketch.
-func (s Sketch) CountMinMean(h string) uint32 {
+func (s Sketch) CountMeanMin(h string) uint32 {
 	var min uint32 = math.MaxUint32
 	w := len(s.sk[0])
 	d := len(s.sk)
