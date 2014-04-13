@@ -221,3 +221,34 @@ func (s *Sketch) Merge(from *Sketch) {
 		}
 	}
 }
+
+/*
+This is Algorithm 3 "Item Aggregation" from
+
+Hokusai: Sketching Streams in Real Time (Sergiy Matusevych, Alex Smola, Amr Ahmed, 2012)
+
+Proceedings of the 28th International Conference on Conference on Uncertainty in Artificial Intelligence (UAI)
+
+http://www.auai.org/uai2012/papers/231.pdf
+*/
+
+// Compress reduces the space used by the sketch.  This also reduces the accuracy.  This routine panics if the width is not a power of two.
+func (s *Sketch) Compress() {
+	w := len(s.sk[0])
+
+	if w&(w-1) != 0 {
+		panic("width must be a power of two")
+	}
+
+	neww := w / 2
+
+	for i, l := range s.sk {
+		// We allocate a new array here so old space can actually be garbage collected.
+		// TODO(dgryski): reslice and only reallocate every few compressions
+		row := make([]uint32, neww)
+		for j := 0; j < neww; j++ {
+			row[j] = l[j] + l[j+neww]
+		}
+		s.sk[i] = row
+	}
+}

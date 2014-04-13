@@ -77,6 +77,46 @@ func TestMerging(t *testing.T) {
 	}
 }
 
+func TestCompress(t *testing.T) {
+	s := NewSketch(8, 3)
+
+	hello := "hello"
+	there := "there"
+	world := "world"
+
+	s.Increment(hello)
+	s.Increment(hello)
+	s.Increment(there)
+
+	for _, l := range s.sk {
+		t.Log(l)
+	}
+
+	s.Compress()
+
+	for _, l := range s.sk {
+		t.Log(l)
+		if len(l) != 4 {
+			t.Errorf("Expected length 4, got %v\n", len(l))
+		}
+	}
+
+	exp := []struct {
+		s string
+		v uint32
+	}{
+		{hello, 2},
+		{there, 1},
+		{world, 0},
+	}
+
+	for _, e := range exp {
+		if s.Count(e.s) != e.v {
+			t.Fatalf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
+		}
+	}
+}
+
 func BenchmarkHashNStringDepth64(b *testing.B) {
 	s := "this is a test string to hash"
 
