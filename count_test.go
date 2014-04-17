@@ -120,7 +120,13 @@ func TestCompress(t *testing.T) {
 func BenchmarkHashNStringDepth64(b *testing.B) {
 	s := "this is a test string to hash"
 
+	lim := uint32(64)
+
 	for i := 0; i < b.N; i++ {
-		hashn(s, 64, 64)
+		h1, h2 := hashn(s) // , 64, 64)
+		var h uint32
+		for j := uint32(0); j < 64; j++ {
+			h += (h1 + j*h2) % lim
+		}
 	}
 }

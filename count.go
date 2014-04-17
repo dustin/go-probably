@@ -35,14 +35,14 @@ func (s Sketch) String() string {
 	return fmt.Sprintf("{Sketch %dx%d}", len(s.sk[0]), len(s.sk))
 }
 
-func hashn(s string, d, lim int) []int {
+func hashn(s string) (h1, h2 uint32) {
 
 	fnv1a := fnv.New32a()
 	fnv1a.Write([]byte(s))
-	h1 := fnv1a.Sum32()
+	h1 = fnv1a.Sum32()
 
 	// inlined jenkins one-at-a-time hash
-	h2 := uint32(0)
+	h2 = uint32(0)
 	for _, c := range s {
 		h2 += uint32(c)
 		h2 += h2 << 10
@@ -52,18 +52,7 @@ func hashn(s string, d, lim int) []int {
 	h2 ^= (h2 >> 11)
 	h2 += (h2 << 15)
 
-	rv := make([]int, 0, d)
-
-	for i := 0; i < d; i++ {
-		h := int(h1) + i*int(h2)
-		h %= lim
-		if h < 0 {
-			h = 0 - h
-		}
-		rv = append(rv, h)
-	}
-
-	return rv
+	return h1, h2
 }
 
 // Add 'count' occurences of the given input
@@ -71,7 +60,9 @@ func (s *Sketch) Add(h string, count uint32) (val uint32) {
 	w := len(s.sk[0])
 	d := len(s.sk)
 	val = math.MaxUint32
-	for i, pos := range hashn(h, d, w) {
+	h1, h2 := hashn(h)
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
 		s.rowCounts[i] += count
 		v := s.sk[i][pos] + count
 		s.sk[i][pos] = v
@@ -87,7 +78,9 @@ func (s *Sketch) Del(h string, count uint32) (val uint32) {
 	w := len(s.sk[0])
 	d := len(s.sk)
 	val = math.MaxUint32
-	for i, pos := range hashn(h, d, w) {
+	h1, h2 := hashn(h)
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
 		s.rowCounts[i] -= count
 		v := s.sk[i][pos] - count
 		if v > s.sk[i][pos] { // did we wrap-around?
@@ -115,10 +108,11 @@ func (s *Sketch) ConservativeIncrement(h string) (val uint32) {
 func (s *Sketch) ConservativeAdd(h string, count uint32) (val uint32) {
 	w := len(s.sk[0])
 	d := len(s.sk)
-	hashes := hashn(h, d, w)
-
+	h1, h2 := hashn(h)
 	val = math.MaxUint32
-	for i, pos := range hashes {
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
+
 		v := s.sk[i][pos]
 		if v < val {
 			val = v
@@ -132,7 +126,8 @@ func (s *Sketch) ConservativeAdd(h string, count uint32) (val uint32) {
 	// first described in Cristian Estan and George Varghese. 2002. New directions in
 	// traffic measurement and accounting. SIGCOMM Comput. Commun. Rev., 32(4).
 
-	for i, pos := range hashes {
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
 		v := s.sk[i][pos]
 		if v < val {
 			s.rowCounts[i] += (val - s.sk[i][pos])
@@ -147,7 +142,11 @@ func (s Sketch) Count(h string) uint32 {
 	var min uint32 = math.MaxUint32
 	w := len(s.sk[0])
 	d := len(s.sk)
-	for i, pos := range hashn(h, d, w) {
+
+	h1, h2 := hashn(h)
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
+
 		v := s.sk[i][pos]
 		if v < min {
 			min = v
@@ -177,7 +176,9 @@ func (s Sketch) CountMeanMin(h string) uint32 {
 	w := len(s.sk[0])
 	d := len(s.sk)
 	residues := make([]float64, d)
-	for i, pos := range hashn(h, d, w) {
+	h1, h2 := hashn(h)
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
 		v := s.sk[i][pos]
 		noise := float64(s.rowCounts[i]-s.sk[i][pos]) / float64(w-1)
 		residues[i] = float64(v) - noise
