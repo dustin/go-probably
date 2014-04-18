@@ -7,13 +7,13 @@ import (
 	"sort"
 )
 
-// A count-min sketcher.
+// Sketch is a count-min sketcher.
 type Sketch struct {
 	sk        [][]uint32
 	rowCounts []uint32
 }
 
-// Create a new count-min sketch with the given width and depth.
+// NewSketch returns new count-min sketch with the given width and depth.
 func NewSketch(w, d int) *Sketch {
 	if d < 1 || w < 1 {
 		panic("Dimensions must be positive")
@@ -73,7 +73,7 @@ func (s *Sketch) Add(h string, count uint32) (val uint32) {
 	return val
 }
 
-// Delete 'count' occurences of the given input
+// Del removes 'count' occurences of the given input
 func (s *Sketch) Del(h string, count uint32) (val uint32) {
 	w := len(s.sk[0])
 	d := len(s.sk)
@@ -99,12 +99,12 @@ func (s *Sketch) Increment(h string) (val uint32) {
 	return s.Add(h, 1)
 }
 
-// Increment the count (conservatively) for the given input.
+// ConservativeIncrement increments the count (conservatively) for the given input.
 func (s *Sketch) ConservativeIncrement(h string) (val uint32) {
 	return s.ConservativeAdd(h, 1)
 }
 
-// Add the count (conservatively) for the given input.
+// ConservativeAdd adds the count (conservatively) for the given input.
 func (s *Sketch) ConservativeAdd(h string, count uint32) (val uint32) {
 	w := len(s.sk[0])
 	d := len(s.sk)
@@ -137,9 +137,9 @@ func (s *Sketch) ConservativeAdd(h string, count uint32) (val uint32) {
 	return val
 }
 
-// Get the estimate count for the given input.
+// Count returns the estimated count for the given input.
 func (s Sketch) Count(h string) uint32 {
-	var min uint32 = math.MaxUint32
+	min := uint32(math.MaxUint32)
 	w := len(s.sk[0])
 	d := len(s.sk)
 
@@ -166,13 +166,13 @@ func (s Sketch) Count(h string) uint32 {
    http://www.umiacs.umd.edu/~amit/Papers/goyalPointQueryEMNLP12.pdf
 */
 
-// Get the estimate count for the given input, using the count-min-mean
+// CountMeanMin returns estimated count for the given input, using the count-min-mean
 // heuristic.  This gives more accurate results than Count() for low-frequency
 // counts at the cost of larger under-estimation error.  For tasks sensitive to
 // under-estimation, use the regular Count() and only call ConservativeAdd()
 // and ConservativeIncrement() when constructing your sketch.
 func (s Sketch) CountMeanMin(h string) uint32 {
-	var min uint32 = math.MaxUint32
+	min := uint32(math.MaxUint32)
 	w := len(s.sk[0])
 	d := len(s.sk)
 	residues := make([]float64, d)

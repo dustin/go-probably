@@ -6,7 +6,7 @@ import (
 
 const initialThresh = 0
 
-// Top-n items on a stream.
+// StreamTop tracks the top-n items in a stream.
 type StreamTop struct {
 	sk       *Sketch
 	thresh   uint32
@@ -16,12 +16,14 @@ type StreamTop struct {
 	keys map[string]uint32
 }
 
-// An item with its count.
+// ItemCount represents an item with its count
 type ItemCount struct {
 	Key   string
 	Count uint32
 }
 
+// NewStreamTop returns an estimator for the 'maxItems' in the stream.  It uses
+// a count-min sketch, which is created with width w and depth d.
 func NewStreamTop(w, d, maxItems int) *StreamTop {
 	return &StreamTop{
 		NewSketch(w, d),
@@ -83,7 +85,7 @@ func (s *StreamTop) Add(v string) {
 	}
 }
 
-// Get the top items.
+// GetTop returns the top items from the stream
 func (s StreamTop) GetTop() []ItemCount {
 	ts := s.getTrimSlice()
 	rv := make([]ItemCount, 0, len(s.keys))

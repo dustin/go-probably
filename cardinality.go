@@ -24,7 +24,7 @@ type HyperLogLog struct {
 	bits    []uint8
 }
 
-// Get a HyperLogLog to count within the given stderr.
+// NewHyperLogLog returns an estimator for counting cardinality to within the given stderr.
 //
 // Smaller values require more space, but provide more accurate
 // results.  For a good time, try 0.001 or so.
@@ -66,7 +66,7 @@ func (h *HyperLogLog) Add(hash uint32) {
 	}
 }
 
-// Get the current estimate of the number of items seen.
+// Count returns the current estimate of the number of distinct items seen.
 func (h *HyperLogLog) Count() uint64 {
 	c := 0.0
 	for i := uint(0); i < h.m; i++ {
