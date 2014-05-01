@@ -456,3 +456,29 @@ func TestCardinalityMerging(t *testing.T) {
 		t.Fatalf("Expected estimate of 2,334, got %v", hll.Count())
 	}
 }
+
+func TestMergeCompatibility(t *testing.T) {
+	tests := []struct {
+		a, b  float64
+		fails bool
+	}{
+		{.001, .001, false},
+		{.001, .15, true},
+		{.001, .3, true},
+		{.001, .2, true},
+	}
+
+	for _, test := range tests {
+		failed := false
+		a := NewHyperLogLog(test.a)
+		b := NewHyperLogLog(test.b)
+		func() {
+			defer func() { _, failed = recover().(string) }()
+			a.Merge(b)
+		}()
+		if test.fails != failed {
+			t.Logf("Failed on %v (%v) / %v (%v) Expected failed=%v",
+				test.a, len(a.bits), test.b, len(b.bits), test.fails)
+		}
+	}
+}
