@@ -14,6 +14,7 @@ type Sketch struct {
 }
 
 // NewSketch returns new count-min sketch with the given width and depth.
+// Sketch dimensions must be positive.
 func NewSketch(w, d int) *Sketch {
 	if d < 1 || w < 1 {
 		panic("Dimensions must be positive")
@@ -211,6 +212,7 @@ func (s Sketch) CountMeanMin(h string) uint32 {
 }
 
 // Merge the given sketch into this one.
+// The sketches must have the same dimensions.
 func (s *Sketch) Merge(from *Sketch) {
 	if len(s.sk) != len(from.sk) || len(s.sk[0]) != len(from.sk[0]) {
 		panic("Can't merge different sketches with different dimensions")
@@ -226,14 +228,18 @@ func (s *Sketch) Merge(from *Sketch) {
 /*
 This is Algorithm 3 "Item Aggregation" from
 
-Hokusai: Sketching Streams in Real Time (Sergiy Matusevych, Alex Smola, Amr Ahmed, 2012)
+Hokusai: Sketching Streams in Real Time (Sergiy Matusevych, Alex
+Smola, Amr Ahmed, 2012)
 
-Proceedings of the 28th International Conference on Conference on Uncertainty in Artificial Intelligence (UAI)
+Proceedings of the 28th International Conference on Conference on
+Uncertainty in Artificial Intelligence (UAI)
 
 http://www.auai.org/uai2012/papers/231.pdf
 */
 
-// Compress reduces the space used by the sketch.  This also reduces the accuracy.  This routine panics if the width is not a power of two.
+// Compress reduces the space used by the sketch.  This also reduces
+// the accuracy.  This routine panics if the width is not a power of
+// two.
 func (s *Sketch) Compress() {
 	w := len(s.sk[0])
 
