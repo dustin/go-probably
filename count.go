@@ -156,6 +156,23 @@ func (s Sketch) Count(h string) uint32 {
 	return min
 }
 
+// Values returns the all the estimates for a given string
+func (s Sketch) Values(h string) []uint32 {
+	w := len(s.sk[0])
+	d := len(s.sk)
+
+	vals := make([]uint32, d)
+
+	h1, h2 := hashn(h)
+	for i := 0; i < d; i++ {
+		pos := (h1 + uint32(i)*h2) % uint32(w)
+
+		vals[i] = s.sk[i][pos]
+	}
+
+	return vals
+}
+
 /*
    CountMeanMin described in:
    Fan Deng and Davood Raﬁei. 2007. New estimation algorithms for streaming data: Count-min can do more.
@@ -223,6 +240,23 @@ func (s *Sketch) Merge(from *Sketch) {
 			s.sk[i][j] += v
 		}
 	}
+}
+
+// Clone returns a copy of this sketch
+func (s *Sketch) Clone() *Sketch {
+
+	w := len(s.sk[0])
+	d := len(s.sk)
+
+	clone := NewSketch(w, d)
+
+	for i, l := range s.sk {
+		copy(clone.sk[i], l)
+	}
+
+	copy(clone.rowCounts, s.rowCounts)
+
+	return clone
 }
 
 /*
