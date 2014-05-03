@@ -39,7 +39,25 @@ func TestCounting(t *testing.T) {
 	for _, e := range exp {
 
 		if s.Count(e.s) != e.v {
-			t.Fatalf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
+			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
+		}
+	}
+
+	if s.Del(hello, 1) != 1 {
+		t.Fatalf("Expected increment to set to 2")
+	}
+	exp = []struct {
+		s string
+		v uint32
+	}{
+		{hello, 1},
+		{there, 1},
+		{world, 0},
+	}
+
+	for _, e := range exp {
+		if s.Count(e.s) != e.v {
+			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
 		}
 	}
 }
