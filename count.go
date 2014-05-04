@@ -14,7 +14,8 @@ type Sketch struct {
 }
 
 // NewSketch returns new count-min sketch with the given width and depth.
-// Sketch dimensions must be positive.
+// Sketch dimensions must be positive.  A sketch with w=⌈ ℯ/𝜀 ⌉ and
+// d=⌈ln (1/𝛿)⌉ answers queries within a factor of 𝜀 with probability 𝛿 .
 func NewSketch(w, d int) *Sketch {
 	if d < 1 || w < 1 {
 		panic("Dimensions must be positive")
