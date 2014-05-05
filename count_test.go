@@ -62,6 +62,55 @@ func TestCounting(t *testing.T) {
 	}
 }
 
+func TestConservativeCounting(t *testing.T) {
+	s := NewSketch(8, 3)
+
+	hello := "hello"
+	there := "there"
+	world := "world"
+
+	if s.ConservativeIncrement(hello) != 1 {
+		t.Errorf("Expected increment to set to 1")
+	}
+	if s.ConservativeIncrement(hello) != 2 {
+		t.Errorf("Expected increment to set to 2")
+	}
+	s.ConservativeIncrement(there)
+
+	exp := []struct {
+		s string
+		v uint32
+	}{
+		{hello, 2},
+		{there, 1},
+		{world, 0},
+	}
+
+	for _, e := range exp {
+		if s.Count(e.s) != e.v {
+			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
+		}
+	}
+
+	if s.Del(hello, 1) != 1 {
+		t.Errorf("Expected increment to set to 2")
+	}
+	exp = []struct {
+		s string
+		v uint32
+	}{
+		{hello, 1},
+		{there, 1},
+		{world, 0},
+	}
+
+	for _, e := range exp {
+		if s.Count(e.s) != e.v {
+			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
+		}
+	}
+}
+
 func TestMerging(t *testing.T) {
 	s := NewSketch(8, 3)
 
