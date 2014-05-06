@@ -37,7 +37,6 @@ func TestCounting(t *testing.T) {
 	}
 
 	for _, e := range exp {
-
 		if s.Count(e.s) != e.v {
 			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
 		}
@@ -58,6 +57,55 @@ func TestCounting(t *testing.T) {
 	for _, e := range exp {
 		if s.Count(e.s) != e.v {
 			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.Count(e.s))
+		}
+	}
+}
+
+func TestMeanCounting(t *testing.T) {
+	s := NewSketch(8, 3)
+
+	hello := "hello"
+	there := "there"
+	world := "world"
+
+	if s.ConservativeIncrement(hello) != 1 {
+		t.Fatalf("Expected increment to set to 1")
+	}
+	if s.ConservativeIncrement(hello) != 2 {
+		t.Fatalf("Expected increment to set to 2")
+	}
+	s.ConservativeIncrement(there)
+
+	exp := []struct {
+		s string
+		v uint32
+	}{
+		{hello, 1},
+		{there, 0},
+		{world, 0},
+	}
+
+	for _, e := range exp {
+		if s.CountMeanMin(e.s) != e.v {
+			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.CountMeanMin(e.s))
+		}
+	}
+
+	if s.Del(hello, 1) != 1 {
+		t.Fatalf("Expected increment to set to 2")
+	}
+	exp = []struct {
+		s string
+		v uint32
+	}{
+		{hello, 0},
+		{there, 0},
+		{world, 0},
+	}
+
+	for _, e := range exp {
+		if s.CountMeanMin(e.s) != e.v {
+			t.Errorf("Expected %v for %v, got %v", e.v, e.s, s.CountMeanMin(e.s))
 		}
 	}
 }
