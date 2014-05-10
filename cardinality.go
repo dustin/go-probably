@@ -99,6 +99,8 @@ func (h *HyperLogLog) Merge(from *HyperLogLog) {
 	}
 
 	for i, v := range from.bits {
-		h.bits[i] += v
+		if v > h.bits[i] {
+			h.bits[i] = v
+		}
 	}
 }
