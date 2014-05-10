@@ -57,6 +57,21 @@ func hashn(s string) (h1, h2 uint32) {
 	return h1, h2
 }
 
+// Reset clears all the values from the sketch.
+func (s *Sketch) Reset() {
+
+	// Complier doesn't yet optimize this into memset: https://code.google.com/p/go/issues/detail?id=5373
+	for _, w := range s.sk {
+		for i := range w {
+			w[i] = 0
+		}
+	}
+
+	for i := range s.rowCounts {
+		s.rowCounts[i] = 0
+	}
+}
+
 // Add 'count' occurences of the given input
 func (s *Sketch) Add(h string, count uint32) (val uint32) {
 	w := len(s.sk[0])
