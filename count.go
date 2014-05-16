@@ -39,6 +39,17 @@ func (s Sketch) String() string {
 
 func hashn(s string) (h1, h2 uint32) {
 
+	// This construction comes from
+	// http://www.eecs.harvard.edu/~michaelm/postscripts/tr-02-05.pdf
+	// "Building a Better Bloom Filter", by Kirsch and Mitzenmacher. Their
+	// proof that this is allowed for count-min requires the h functions to
+	// be from the 2-universal hash family, w be a prime and d be larger
+	// than the traditional CM-sketch requirements.
+
+	// Empirically, though, this seems to work "just fine".
+
+	// TODO(dgryski): Switch to something that is actually validated by the literature.
+
 	fnv1a := fnv.New32a()
 	fnv1a.Write([]byte(s))
 	h1 = fnv1a.Sum32()
