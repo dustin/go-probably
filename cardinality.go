@@ -114,11 +114,7 @@ func (h *HyperLogLog) MarshalJSON() ([]byte, error) {
 		"alpha_m": h.alpha_m,
 		"bits":    h.bits,
 	}
-	if by, err := json.Marshal(m); err != nil {
-		return nil, err
-	} else {
-		return by, nil
-	}
+	return json.Marshal(m)
 }
 
 func (h *HyperLogLog) UnmarshalJSON(by []byte) error {
