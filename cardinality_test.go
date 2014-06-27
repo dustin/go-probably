@@ -1,6 +1,7 @@
 package probably
 
 import (
+	"encoding/json"
 	"hash/crc32"
 	"testing"
 )
@@ -433,6 +434,37 @@ func TestCardinality(t *testing.T) {
 	t.Logf("Word list is %v words, estimate is %v", len(words), hll.Count())
 	if hll.Count() != 2334 {
 		t.Fatalf("Expected estimate of 2,334, got %v", hll.Count())
+	}
+}
+
+func TestCardinalityJson(t *testing.T) {
+	hll := NewHyperLogLog(0.001)
+	for _, w := range words {
+		h := crc32.ChecksumIEEE([]byte(w))
+		hll.Add(h)
+	}
+	t.Logf("Word list is %v words, estimate is %v", len(words), hll.Count())
+	if hll.Count() != 2334 {
+		t.Fatalf("Expected estimate of 2,334, got %v", hll.Count())
+	}
+	by, err := json.Marshal(hll)
+	if err != nil {
+		t.Fatalf("Must not error on json serialization: %v", err)
+	}
+	var llJson HyperLogLog
+	err = json.Unmarshal(by, &llJson)
+	if err != nil {
+		t.Fatalf("Must not error on json deserialization: %v", err)
+	}
+	if llJson.Count() != 2334 {
+		t.Fatalf("2 Expected estimate of 2,334, got %v", llJson.Count())
+	}
+	for _, w := range words {
+		h := crc32.ChecksumIEEE([]byte(w))
+		llJson.Add(h)
+	}
+	if llJson.Count() != 2334 {
+		t.Fatalf("3 Expected estimate of 2,334, got %v", llJson.Count())
 	}
 }
 

@@ -1,6 +1,7 @@
 package probably
 
 import (
+	"encoding/json"
 	"math"
 )
 
@@ -103,4 +104,41 @@ func (h *HyperLogLog) Merge(from *HyperLogLog) {
 			h.bits[i] = v
 		}
 	}
+}
+
+func (h *HyperLogLog) MarshalJSON() ([]byte, error) {
+	m := map[string]interface{}{
+		"m":       h.m,
+		"k":       h.k,
+		"k_comp":  h.k_comp,
+		"alpha_m": h.alpha_m,
+		"bits":    h.bits,
+	}
+	if by, err := json.Marshal(m); err != nil {
+		return nil, err
+	} else {
+		return by, nil
+	}
+}
+
+func (h *HyperLogLog) UnmarshalJSON(by []byte) error {
+
+	data := struct {
+		M      uint    `json:"m"`
+		K      float64 `json:"k"`
+		KComp  int     `json:"k_comp"`
+		AlphaM float64 `json:"alpha_m"`
+		Bits   []uint8 `json:"bits"`
+	}{}
+
+	err := json.Unmarshal(by, &data)
+	if err != nil {
+		return err
+	}
+	h.m = data.M
+	h.k = data.K
+	h.k_comp = data.KComp
+	h.alpha_m = data.AlphaM
+	h.bits = data.Bits
+	return nil
 }
