@@ -6,4 +6,4 @@ probabilistic data structures.
 
 For more how and why, check out [this blog post][blogpost].
 
-[blogpost]: http://highlyscalable.wordpress.com/2012/05/01/probabilistic-structures-web-analytics-data-mining/
+[blogpost]: http://blog.gopheracademy.com/advent-2014/go-probably/
